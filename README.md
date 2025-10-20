@@ -92,7 +92,11 @@ Download Maven from [Apache Maven website](https://maven.apache.org/download.cgi
 Add Maven to your system PATH and verify:
 ```bash
 mvn -version
+# OR if you have Maven Daemon installed:
+mvnd --version
 ```
+
+**Note:** You have Maven Daemon (mvnd) installed, which is a faster version of Maven. You can use `mvnd` instead of `mvn` in all commands.
 
 ### 4. Clone the Repository
 ```bash
@@ -145,11 +149,15 @@ Replace `yourpassword` with your MySQL root password.
 1. **Clean and compile:**
 ```bash
 mvn clean compile
+# OR with Maven Daemon (faster):
+mvnd clean compile
 ```
 
 2. **Package the application:**
 ```bash
 mvn clean package
+# OR with Maven Daemon (faster):
+mvnd clean package
 ```
 
 This will create two JAR files in the `target/` directory:
@@ -160,12 +168,12 @@ This will create two JAR files in the `target/` directory:
 
 ### Method 1: Using Maven
 ```bash
-mvn clean javafx:run
+mvn exec:java -Dexec.mainClass="com.attendance.Main"
 ```
 
-Or simply:
+**OR with Maven Daemon (faster):**
 ```bash
-mvn exec:java -Dexec.mainClass="com.attendance.Main"
+mvnd exec:java -Dexec.mainClass="com.attendance.Main"
 ```
 
 ### Method 2: Using the Fat JAR

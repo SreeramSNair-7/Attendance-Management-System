@@ -11,14 +11,21 @@ echo Build and Run Script
 echo ======================================
 echo.
 
-REM Check if Maven is installed
+REM Check if Maven or Maven Daemon is installed
 where mvn >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Maven is not installed or not in PATH
-    echo Please install Maven and add it to PATH
-    echo Download from: https://maven.apache.org/download.cgi
-    pause
-    exit /b 1
+if %ERRORLEVEL% EQU 0 (
+    set MVN_CMD=mvn
+) else (
+    where mvnd >nul 2>nul
+    if %ERRORLEVEL% EQU 0 (
+        set MVN_CMD=mvnd
+    ) else (
+        echo [ERROR] Maven is not installed or not in PATH
+        echo Please install Maven and add it to PATH
+        echo Download from: https://maven.apache.org/download.cgi
+        pause
+        exit /b 1
+    )
 )
 
 REM Check if Java is installed
@@ -31,7 +38,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [INFO] Maven found: 
-mvn -version | findstr "Apache Maven"
+%MVN_CMD% --version 2>&1 | findstr "Apache Maven"
 echo.
 echo [INFO] Java found:
 java -version 2>&1 | findstr "version"
@@ -66,7 +73,7 @@ goto end
 :build
 echo.
 echo [INFO] Cleaning and building project...
-call mvn clean compile
+call %MVN_CMD% clean compile
 if %ERRORLEVEL% EQU 0 (
     echo [SUCCESS] Build completed successfully!
 ) else (
@@ -78,18 +85,18 @@ goto end
 :run
 echo.
 echo [INFO] Running application...
-call mvn exec:java -Dexec.mainClass="com.attendance.Main"
+call %MVN_CMD% exec:java -Dexec.mainClass="com.attendance.Main"
 pause
 goto end
 
 :buildrun
 echo.
 echo [INFO] Cleaning, building and running...
-call mvn clean compile
+call %MVN_CMD% clean compile
 if %ERRORLEVEL% EQU 0 (
     echo [SUCCESS] Build completed!
     echo [INFO] Starting application...
-    call mvn exec:java -Dexec.mainClass="com.attendance.Main"
+    call %MVN_CMD% exec:java -Dexec.mainClass="com.attendance.Main"
 ) else (
     echo [ERROR] Build failed!
 )
@@ -99,7 +106,7 @@ goto end
 :package
 echo.
 echo [INFO] Creating fat JAR with dependencies...
-call mvn clean package
+call %MVN_CMD% clean package
 if %ERRORLEVEL% EQU 0 (
     echo [SUCCESS] Fat JAR created successfully!
     echo [INFO] Location: target\attendance-management-system-1.0.0-jar-with-dependencies.jar
