@@ -1,11 +1,16 @@
 package com.attendance.dao;
 
-import com.attendance.db.DatabaseConnection;
-import com.attendance.model.Student;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.attendance.db.DatabaseConnection;
+import com.attendance.model.Student;
 
 /**
  * Data Access Object for Student operations
@@ -21,7 +26,7 @@ public class StudentDAO {
      * Add a new student to the database
      */
     public boolean addStudent(Student student) {
-        String sql = "INSERT INTO students (name, roll_no, department, semester) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO students (name, roll_no, department, semester, class_name) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -30,6 +35,7 @@ public class StudentDAO {
             pstmt.setString(2, student.getRollNo());
             pstmt.setString(3, student.getDepartment());
             pstmt.setInt(4, student.getSemester());
+            pstmt.setString(5, student.getClassName());
             
             int affectedRows = pstmt.executeUpdate();
             
@@ -53,7 +59,7 @@ public class StudentDAO {
      * Update an existing student
      */
     public boolean updateStudent(Student student) {
-        String sql = "UPDATE students SET name = ?, roll_no = ?, department = ?, semester = ? WHERE student_id = ?";
+        String sql = "UPDATE students SET name = ?, roll_no = ?, department = ?, semester = ?, class_name = ? WHERE student_id = ?";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -62,7 +68,8 @@ public class StudentDAO {
             pstmt.setString(2, student.getRollNo());
             pstmt.setString(3, student.getDepartment());
             pstmt.setInt(4, student.getSemester());
-            pstmt.setInt(5, student.getStudentId());
+            pstmt.setString(5, student.getClassName());
+            pstmt.setInt(6, student.getStudentId());
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -137,11 +144,11 @@ public class StudentDAO {
     }
 
     /**
-     * Get all students
+     * Get all students ordered by class and roll number
      */
     public List<Student> getAllStudents() {
         List<Student> students = new ArrayList<>();
-        String sql = "SELECT * FROM students ORDER BY name";
+        String sql = "SELECT * FROM students ORDER BY class_name, roll_no";
         
         try (Connection conn = dbConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -162,7 +169,7 @@ public class StudentDAO {
      */
     public List<Student> searchStudents(String keyword) {
         List<Student> students = new ArrayList<>();
-        String sql = "SELECT * FROM students WHERE name LIKE ? OR roll_no LIKE ? ORDER BY name";
+        String sql = "SELECT * FROM students WHERE name LIKE ? OR roll_no LIKE ? ORDER BY class_name, roll_no";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -232,6 +239,79 @@ public class StudentDAO {
     }
 
     /**
+     * Get students by class name ordered by roll number
+     */
+    public List<Student> getStudentsByClass(String className) {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT * FROM students WHERE class_name = ? ORDER BY roll_no";
+        
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, className);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(extractStudentFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting students by class: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return students;
+    }
+
+    /**
+     * Get students by department ordered by class and roll number
+     */
+    public List<Student> getStudentsByDepartmentOrdered(String department) {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT * FROM students WHERE department = ? ORDER BY class_name, roll_no";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, department);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(extractStudentFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting students by department: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return students;
+    }
+
+    /**
+     * Get students by class and department ordered by roll number
+     */
+    public List<Student> getStudentsByClassAndDepartment(String className, String department) {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT * FROM students WHERE class_name = ? AND department = ? ORDER BY roll_no";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, className);
+            pstmt.setString(2, department);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(extractStudentFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting students by class and department: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return students;
+    }
+
+    /**
      * Check if roll number already exists
      */
     public boolean isRollNoExists(String rollNo, int excludeStudentId) {
@@ -265,6 +345,7 @@ public class StudentDAO {
         student.setRollNo(rs.getString("roll_no"));
         student.setDepartment(rs.getString("department"));
         student.setSemester(rs.getInt("semester"));
+        student.setClassName(rs.getString("class_name"));
         
         Timestamp timestamp = rs.getTimestamp("created_at");
         if (timestamp != null) {

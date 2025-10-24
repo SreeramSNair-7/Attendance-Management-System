@@ -1,13 +1,32 @@
 package com.attendance.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+
 import com.attendance.dao.SubjectDAO;
 import com.attendance.model.Subject;
 import com.attendance.service.AttendanceService;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.List;
 
 /**
  * Panel for managing subjects with CRUD operations
@@ -18,21 +37,29 @@ public class SubjectPanel extends JPanel {
     private SubjectDAO subjectDAO;
     private AttendanceService attendanceService;
     private JTextField searchField;
+    private JComboBox<String> semesterFilterCombo;
 
     public SubjectPanel() {
         subjectDAO = new SubjectDAO();
         attendanceService = new AttendanceService();
+            // Disabled auto-generation of default subjects
+            // subjectDAO.ensureDefaultSubjects();
         initializeComponents();
     }
 
     private void initializeComponents() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    setLayout(new BorderLayout(10, 10));
+    setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    Color darkBlue = new Color(13, 71, 161);
+    Color lightBlue = new Color(227, 242, 253);
+    setBackground(lightBlue);
 
         // Title panel
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    titlePanel.setBackground(darkBlue);
         JLabel titleLabel = new JLabel("Manage Subjects");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+    titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
         add(titlePanel, BorderLayout.NORTH);
 
@@ -49,14 +76,24 @@ public class SubjectPanel extends JPanel {
         subjectTable.setRowHeight(25);
         subjectTable.getTableHeader().setReorderingAllowed(false);
         
-        JScrollPane scrollPane = new JScrollPane(subjectTable);
+    JScrollPane scrollPane = new JScrollPane(subjectTable);
+    scrollPane.getViewport().setBackground(lightBlue);
         add(scrollPane, BorderLayout.CENTER);
 
         // Bottom panel with search and buttons
-        JPanel bottomPanel = new JPanel(new BorderLayout(10, 10));
+    JPanel bottomPanel = new JPanel(new BorderLayout(10, 10));
+    bottomPanel.setBackground(lightBlue);
         
         // Search panel
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    searchPanel.setBackground(lightBlue);
+        
+        // Semester filter
+        searchPanel.add(new JLabel("Semester:"));
+        semesterFilterCombo = new JComboBox<>(new String[]{"All", "1", "2", "3", "4", "5", "6", "7", "8"});
+        semesterFilterCombo.addActionListener(e -> applyFilters());
+        searchPanel.add(semesterFilterCombo);
+        
         searchPanel.add(new JLabel("Search:"));
         searchField = new JTextField(20);
         searchPanel.add(searchField);
@@ -66,12 +103,14 @@ public class SubjectPanel extends JPanel {
         JButton clearButton = new JButton("Clear");
         clearButton.addActionListener(e -> {
             searchField.setText("");
+            semesterFilterCombo.setSelectedIndex(0); // Reset to "All"
             refreshData();
         });
         searchPanel.add(clearButton);
         
         // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    buttonPanel.setBackground(lightBlue);
         JButton addButton = new JButton("Add Subject");
         addButton.addActionListener(e -> showAddDialog());
         JButton editButton = new JButton("Edit Subject");
@@ -100,15 +139,37 @@ public class SubjectPanel extends JPanel {
         updateTable(subjects);
     }
 
-    private void searchSubjects() {
+    private void applyFilters() {
         String keyword = searchField.getText().trim();
-        if (keyword.isEmpty()) {
-            refreshData();
-            return;
+        String semesterFilter = (String) semesterFilterCombo.getSelectedItem();
+        
+        List<Subject> subjects;
+        
+        // Apply semester filter
+        if ("All".equals(semesterFilter)) {
+            if (keyword.isEmpty()) {
+                subjects = subjectDAO.getAllSubjects();
+            } else {
+                subjects = subjectDAO.searchSubjects(keyword);
+            }
+        } else {
+            int semester = Integer.parseInt(semesterFilter);
+            subjects = subjectDAO.getSubjectsBySemester(semester);
+            
+            // Apply keyword search on semester-filtered results
+            if (!keyword.isEmpty()) {
+                subjects = subjects.stream()
+                    .filter(s -> s.getSubjectCode().toLowerCase().contains(keyword.toLowerCase()) ||
+                                s.getSubjectName().toLowerCase().contains(keyword.toLowerCase()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
         }
         
-        List<Subject> subjects = subjectDAO.searchSubjects(keyword);
         updateTable(subjects);
+    }
+
+    private void searchSubjects() {
+        applyFilters();
     }
 
     private void updateTable(List<Subject> subjects) {

@@ -1,11 +1,16 @@
 package com.attendance.dao;
 
-import com.attendance.db.DatabaseConnection;
-import com.attendance.model.Subject;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.attendance.db.DatabaseConnection;
+import com.attendance.model.Subject;
 
 /**
  * Data Access Object for Subject operations
@@ -139,7 +144,7 @@ public class SubjectDAO {
      */
     public List<Subject> getAllSubjects() {
         List<Subject> subjects = new ArrayList<>();
-        String sql = "SELECT * FROM subjects ORDER BY subject_name";
+        String sql = "SELECT * FROM subjects ORDER BY semester ASC, subject_id ASC";
         
         try (Connection conn = dbConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -160,7 +165,7 @@ public class SubjectDAO {
      */
     public List<Subject> searchSubjects(String keyword) {
         List<Subject> subjects = new ArrayList<>();
-        String sql = "SELECT * FROM subjects WHERE subject_code LIKE ? OR subject_name LIKE ? ORDER BY subject_name";
+        String sql = "SELECT * FROM subjects WHERE subject_code LIKE ? OR subject_name LIKE ? ORDER BY semester ASC, subject_id ASC";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -186,7 +191,7 @@ public class SubjectDAO {
      */
     public List<Subject> getSubjectsBySemester(int semester) {
         List<Subject> subjects = new ArrayList<>();
-        String sql = "SELECT * FROM subjects WHERE semester = ? ORDER BY subject_name";
+        String sql = "SELECT * FROM subjects WHERE semester = ? ORDER BY subject_id ASC";
         
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -245,5 +250,39 @@ public class SubjectDAO {
         }
         
         return subject;
+    }
+
+    /**
+     * Ensure there are at least 6 subjects for each semester S1..S7.
+     * It will insert default subjects with codes like S{sem}-01..S{sem}-06
+     * and names like "Semester {sem} Subject {i}" if they don't already exist.
+     */
+    public void ensureDefaultSubjects() {
+        try (Connection conn = dbConnection.getConnection()) {
+            // For semesters 1 through 7
+            for (int sem = 1; sem <= 7; sem++) {
+                int existingCount = 0;
+                try (PreparedStatement countStmt = conn.prepareStatement(
+                        "SELECT COUNT(*) FROM subjects WHERE semester = ?")) {
+                    countStmt.setInt(1, sem);
+                    try (ResultSet rs = countStmt.executeQuery()) {
+                        if (rs.next()) existingCount = rs.getInt(1);
+                    }
+                }
+
+                // Try to insert up to 6 defaults; skip any that already exist by code
+                for (int i = 1; i <= 6; i++) {
+                    String code = String.format("S%d-%02d", sem, i);
+                    if (getSubjectByCode(code) != null) continue;
+                    // If there are already 6 or more for this semester, stop adding
+                    if (existingCount >= 6) break;
+                    String name = String.format("Semester %d Subject %d", sem, i);
+                    addSubject(new Subject(code, name, sem));
+                    existingCount++;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error ensuring default subjects: " + e.getMessage());
+        }
     }
 }

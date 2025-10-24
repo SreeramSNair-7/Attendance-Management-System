@@ -17,10 +17,12 @@ CREATE TABLE students (
     roll_no VARCHAR(50) UNIQUE NOT NULL,
     department VARCHAR(100) NOT NULL,
     semester INT NOT NULL CHECK (semester BETWEEN 1 AND 8),
+    class_name VARCHAR(50) NOT NULL DEFAULT 'A',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_roll_no (roll_no),
     INDEX idx_department (department),
-    INDEX idx_semester (semester)
+    INDEX idx_semester (semester),
+    INDEX idx_class_name (class_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========================================
@@ -68,24 +70,91 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========================================
--- SAMPLE DATA: Students
+-- SAMPLE DATA: Students (75 students - 3 classes of 25 each)
 -- ========================================
-INSERT INTO students (name, roll_no, department, semester) VALUES
-('Rajesh Kumar', 'CS001', 'Computer Science', 5),
-('Priya Sharma', 'CS002', 'Computer Science', 5),
-('Amit Patel', 'CS003', 'Computer Science', 5),
-('Sneha Reddy', 'CS004', 'Computer Science', 5),
-('Vikram Singh', 'CS005', 'Computer Science', 5),
-('Ananya Iyer', 'EC001', 'Electronics', 3),
-('Rohit Verma', 'EC002', 'Electronics', 3),
-('Divya Nair', 'EC003', 'Electronics', 3),
-('Karthik Rao', 'ME001', 'Mechanical', 4),
-('Pooja Desai', 'ME002', 'Mechanical', 4),
-('Arjun Menon', 'CS006', 'Computer Science', 6),
-('Kavya Krishnan', 'CS007', 'Computer Science', 6),
-('Sanjay Gupta', 'EC004', 'Electronics', 5),
-('Meera Joshi', 'ME003', 'Mechanical', 5),
-('Aditya Bhatt', 'CS008', 'Computer Science', 7);
+-- Class A - Computer Science Semester 5
+INSERT INTO students (name, roll_no, department, semester, class_name) VALUES
+('Aarav Kumar', 'CS001', 'Computer Science', 5, 'A'),
+('Aditya Singh', 'CS002', 'Computer Science', 5, 'A'),
+('Akash Sharma', 'CS003', 'Computer Science', 5, 'A'),
+('Amit Patel', 'CS004', 'Computer Science', 5, 'A'),
+('Ananya Reddy', 'CS005', 'Computer Science', 5, 'A'),
+('Arjun Verma', 'CS006', 'Computer Science', 5, 'A'),
+('Aryan Gupta', 'CS007', 'Computer Science', 5, 'A'),
+('Ayush Mehta', 'CS008', 'Computer Science', 5, 'A'),
+('Deepak Rao', 'CS009', 'Computer Science', 5, 'A'),
+('Dev Joshi', 'CS010', 'Computer Science', 5, 'A'),
+('Divya Nair', 'CS011', 'Computer Science', 5, 'A'),
+('Harsh Desai', 'CS012', 'Computer Science', 5, 'A'),
+('Ishaan Kapoor', 'CS013', 'Computer Science', 5, 'A'),
+('Karan Malhotra', 'CS014', 'Computer Science', 5, 'A'),
+('Kavya Iyer', 'CS015', 'Computer Science', 5, 'A'),
+('Krishna Menon', 'CS016', 'Computer Science', 5, 'A'),
+('Meera Bhat', 'CS017', 'Computer Science', 5, 'A'),
+('Naina Pillai', 'CS018', 'Computer Science', 5, 'A'),
+('Pooja Shah', 'CS019', 'Computer Science', 5, 'A'),
+('Priya Krishnan', 'CS020', 'Computer Science', 5, 'A'),
+('Rahul Saxena', 'CS021', 'Computer Science', 5, 'A'),
+('Rajesh Kumar', 'CS022', 'Computer Science', 5, 'A'),
+('Riya Agarwal', 'CS023', 'Computer Science', 5, 'A'),
+('Rohan Shetty', 'CS024', 'Computer Science', 5, 'A'),
+('Sneha Kulkarni', 'CS025', 'Computer Science', 5, 'A');
+
+-- Class B - Electronics & Communication Semester 5
+INSERT INTO students (name, roll_no, department, semester, class_name) VALUES
+('Sanjay Pandey', 'EC001', 'Electronics & Communication', 5, 'B'),
+('Shweta Mishra', 'EC002', 'Electronics & Communication', 5, 'B'),
+('Tanvi Jain', 'EC003', 'Electronics & Communication', 5, 'B'),
+('Varun Choudhary', 'EC004', 'Electronics & Communication', 5, 'B'),
+('Vikram Singh', 'EC005', 'Electronics & Communication', 5, 'B'),
+('Vivek Bansal', 'EC006', 'Electronics & Communication', 5, 'B'),
+('Yash Tripathi', 'EC007', 'Electronics & Communication', 5, 'B'),
+('Abhishek Tiwari', 'EC008', 'Electronics & Communication', 5, 'B'),
+('Anjali Dubey', 'EC009', 'Electronics & Communication', 5, 'B'),
+('Bhavya Yadav', 'EC010', 'Electronics & Communication', 5, 'B'),
+('Chetan Goel', 'EC011', 'Electronics & Communication', 5, 'B'),
+('Dhruv Khanna', 'EC012', 'Electronics & Communication', 5, 'B'),
+('Gaurav Sinha', 'EC013', 'Electronics & Communication', 5, 'B'),
+('Hemant Bhardwaj', 'EC014', 'Electronics & Communication', 5, 'B'),
+('Jatin Kohli', 'EC015', 'Electronics & Communication', 5, 'B'),
+('Komal Arora', 'EC016', 'Electronics & Communication', 5, 'B'),
+('Lakshmi Devi', 'EC017', 'Electronics & Communication', 5, 'B'),
+('Manish Rana', 'EC018', 'Electronics & Communication', 5, 'B'),
+('Neha Chauhan', 'EC019', 'Electronics & Communication', 5, 'B'),
+('Nikhil Rawat', 'EC020', 'Electronics & Communication', 5, 'B'),
+('Pawan Bisht', 'EC021', 'Electronics & Communication', 5, 'B'),
+('Preeti Negi', 'EC022', 'Electronics & Communication', 5, 'B'),
+('Rahul Thakur', 'EC023', 'Electronics & Communication', 5, 'B'),
+('Ritika Saini', 'EC024', 'Electronics & Communication', 5, 'B'),
+('Sahil Sharma', 'EC025', 'Electronics & Communication', 5, 'B');
+
+-- Class C - Mechanical Engineering Semester 5
+INSERT INTO students (name, roll_no, department, semester, class_name) VALUES
+('Sakshi Verma', 'ME001', 'Mechanical Engineering', 5, 'C'),
+('Sameer Khan', 'ME002', 'Mechanical Engineering', 5, 'C'),
+('Siddharth Rao', 'ME003', 'Mechanical Engineering', 5, 'C'),
+('Simran Kaur', 'ME004', 'Mechanical Engineering', 5, 'C'),
+('Sunil Reddy', 'ME005', 'Mechanical Engineering', 5, 'C'),
+('Swati Joshi', 'ME006', 'Mechanical Engineering', 5, 'C'),
+('Tarun Gupta', 'ME007', 'Mechanical Engineering', 5, 'C'),
+('Usha Patel', 'ME008', 'Mechanical Engineering', 5, 'C'),
+('Vijay Kumar', 'ME009', 'Mechanical Engineering', 5, 'C'),
+('Vishal Mehta', 'ME010', 'Mechanical Engineering', 5, 'C'),
+('Akshay Desai', 'ME011', 'Mechanical Engineering', 5, 'C'),
+('Ankita Singh', 'ME012', 'Mechanical Engineering', 5, 'C'),
+('Ashok Mishra', 'ME013', 'Mechanical Engineering', 5, 'C'),
+('Deepika Roy', 'ME014', 'Mechanical Engineering', 5, 'C'),
+('Ekta Pandey', 'ME015', 'Mechanical Engineering', 5, 'C'),
+('Ganesh Iyer', 'ME016', 'Mechanical Engineering', 5, 'C'),
+('Geeta Pillai', 'ME017', 'Mechanical Engineering', 5, 'C'),
+('Hari Nair', 'ME018', 'Mechanical Engineering', 5, 'C'),
+('Isha Bhat', 'ME019', 'Mechanical Engineering', 5, 'C'),
+('Kiran Shetty', 'ME020', 'Mechanical Engineering', 5, 'C'),
+('Mahesh Kulkarni', 'ME021', 'Mechanical Engineering', 5, 'C'),
+('Mohan Agarwal', 'ME022', 'Mechanical Engineering', 5, 'C'),
+('Nisha Shah', 'ME023', 'Mechanical Engineering', 5, 'C'),
+('Prakash Jain', 'ME024', 'Mechanical Engineering', 5, 'C'),
+('Radha Krishna', 'ME025', 'Mechanical Engineering', 5, 'C');
 
 -- ========================================
 -- SAMPLE DATA: Subjects

@@ -1,13 +1,33 @@
 package com.attendance.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+
 import com.attendance.dao.StudentDAO;
 import com.attendance.model.Student;
 import com.attendance.service.AttendanceService;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.List;
 
 /**
  * Panel for managing students with CRUD operations
@@ -18,6 +38,16 @@ public class StudentPanel extends JPanel {
     private StudentDAO studentDAO;
     private AttendanceService attendanceService;
     private JTextField searchField;
+    private JComboBox<String> classFilterCombo;
+    private JComboBox<String> deptFilterCombo;
+
+    // Predefined departments
+    private static final String[] DEPARTMENTS = new String[]{
+            "All",
+            "Computer Science",
+            "Electronics & Communication",
+            "Mechanical Engineering"
+    };
 
     public StudentPanel() {
         studentDAO = new StudentDAO();
@@ -26,18 +56,23 @@ public class StudentPanel extends JPanel {
     }
 
     private void initializeComponents() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    setLayout(new BorderLayout(10, 10));
+    setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    Color primaryBlue = new Color(51, 122, 183);
+    Color lightBlue = new Color(230, 242, 255);
+    setBackground(lightBlue);
 
         // Title panel
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    titlePanel.setBackground(primaryBlue);
         JLabel titleLabel = new JLabel("Manage Students");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+    titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
         add(titlePanel, BorderLayout.NORTH);
 
         // Create table
-        String[] columnNames = {"ID", "Name", "Roll No", "Department", "Semester"};
+        String[] columnNames = {"ID", "Name", "Roll No", "Department", "Semester", "Class"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -50,13 +85,30 @@ public class StudentPanel extends JPanel {
         studentTable.getTableHeader().setReorderingAllowed(false);
         
         JScrollPane scrollPane = new JScrollPane(studentTable);
+        scrollPane.getViewport().setBackground(lightBlue);
         add(scrollPane, BorderLayout.CENTER);
 
         // Bottom panel with search and buttons
         JPanel bottomPanel = new JPanel(new BorderLayout(10, 10));
+        bottomPanel.setBackground(lightBlue);
         
         // Search panel
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setBackground(lightBlue);
+        
+        // Class filter
+        searchPanel.add(new JLabel("Class:"));
+        classFilterCombo = new JComboBox<>(new String[]{"All", "A", "B", "C"});
+        classFilterCombo.addActionListener(e -> applyFilters());
+        searchPanel.add(classFilterCombo);
+        
+        searchPanel.add(Box.createHorizontalStrut(15));
+        searchPanel.add(new JLabel("Department:"));
+        deptFilterCombo = new JComboBox<>(DEPARTMENTS);
+        deptFilterCombo.addActionListener(e -> applyFilters());
+        searchPanel.add(deptFilterCombo);
+
+        searchPanel.add(Box.createHorizontalStrut(20));
         searchPanel.add(new JLabel("Search:"));
         searchField = new JTextField(20);
         searchPanel.add(searchField);
@@ -66,12 +118,15 @@ public class StudentPanel extends JPanel {
         JButton clearButton = new JButton("Clear");
         clearButton.addActionListener(e -> {
             searchField.setText("");
+            classFilterCombo.setSelectedIndex(0);
+            deptFilterCombo.setSelectedIndex(0);
             refreshData();
         });
         searchPanel.add(clearButton);
         
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(lightBlue);
         JButton addButton = new JButton("Add Student");
         addButton.addActionListener(e -> showAddDialog());
         JButton editButton = new JButton("Edit Student");
@@ -100,15 +155,47 @@ public class StudentPanel extends JPanel {
         updateTable(students);
     }
 
+    private void applyFilters() {
+        String selectedClass = (String) classFilterCombo.getSelectedItem();
+        String selectedDept = (String) deptFilterCombo.getSelectedItem();
+
+        List<Student> students;
+        boolean allClass = selectedClass == null || selectedClass.equals("All");
+        boolean allDept = selectedDept == null || selectedDept.equals("All");
+
+        if (allClass && allDept) {
+            students = studentDAO.getAllStudents();
+        } else if (!allClass && allDept) {
+            students = studentDAO.getStudentsByClass(selectedClass);
+        } else if (allClass && !allDept) {
+            students = studentDAO.getStudentsByDepartmentOrdered(selectedDept);
+        } else {
+            students = studentDAO.getStudentsByClassAndDepartment(selectedClass, selectedDept);
+        }
+        updateTable(students);
+    }
+
     private void searchStudents() {
         String keyword = searchField.getText().trim();
         if (keyword.isEmpty()) {
-            refreshData();
+            applyFilters();
             return;
         }
-        
-        List<Student> students = studentDAO.searchStudents(keyword);
-        updateTable(students);
+
+        // Apply search then filter in-memory for current selections
+        List<Student> searched = studentDAO.searchStudents(keyword);
+        String selectedClass = (String) classFilterCombo.getSelectedItem();
+        String selectedDept = (String) deptFilterCombo.getSelectedItem();
+        boolean allClass = selectedClass == null || selectedClass.equals("All");
+        boolean allDept = selectedDept == null || selectedDept.equals("All");
+
+        java.util.ArrayList<Student> filtered = new java.util.ArrayList<>();
+        for (Student s : searched) {
+            boolean classOk = allClass || selectedClass.equals(s.getClassName());
+            boolean deptOk = allDept || selectedDept.equals(s.getDepartment());
+            if (classOk && deptOk) filtered.add(s);
+        }
+        updateTable(filtered);
     }
 
     private void updateTable(List<Student> students) {
@@ -119,7 +206,8 @@ public class StudentPanel extends JPanel {
                 student.getName(),
                 student.getRollNo(),
                 student.getDepartment(),
-                student.getSemester()
+                student.getSemester(),
+                student.getClassName()
             };
             tableModel.addRow(row);
         }
@@ -128,25 +216,32 @@ public class StudentPanel extends JPanel {
     private void showAddDialog() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add Student", true);
         dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setSize(400, 300);
+        dialog.setSize(400, 350);
         dialog.setLocationRelativeTo(this);
 
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JTextField nameField = new JTextField();
         JTextField rollNoField = new JTextField();
-        JTextField departmentField = new JTextField();
+    JComboBox<String> departmentCombo = new JComboBox<>(new String[]{
+        "Computer Science",
+        "Electronics & Communication",
+        "Mechanical Engineering"
+    });
         JSpinner semesterSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 8, 1));
+        JComboBox<String> classCombo = new JComboBox<>(new String[]{"A", "B", "C"});
 
         formPanel.add(new JLabel("Name:"));
         formPanel.add(nameField);
         formPanel.add(new JLabel("Roll No:"));
         formPanel.add(rollNoField);
-        formPanel.add(new JLabel("Department:"));
-        formPanel.add(departmentField);
+    formPanel.add(new JLabel("Department:"));
+    formPanel.add(departmentCombo);
         formPanel.add(new JLabel("Semester:"));
         formPanel.add(semesterSpinner);
+        formPanel.add(new JLabel("Class:"));
+        formPanel.add(classCombo);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveButton = new JButton("Save");
@@ -155,10 +250,11 @@ public class StudentPanel extends JPanel {
         saveButton.addActionListener(e -> {
             String name = nameField.getText().trim();
             String rollNo = rollNoField.getText().trim();
-            String department = departmentField.getText().trim();
+            String department = (String) departmentCombo.getSelectedItem();
             int semester = (Integer) semesterSpinner.getValue();
+            String className = (String) classCombo.getSelectedItem();
 
-            Student student = new Student(name, rollNo, department, semester);
+            Student student = new Student(name, rollNo, department, semester, className);
             String validationError = attendanceService.validateStudent(student, false);
             
             if (validationError != null) {
@@ -202,25 +298,34 @@ public class StudentPanel extends JPanel {
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Student", true);
         dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setSize(400, 300);
+        dialog.setSize(400, 350);
         dialog.setLocationRelativeTo(this);
 
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JTextField nameField = new JTextField(student.getName());
         JTextField rollNoField = new JTextField(student.getRollNo());
-        JTextField departmentField = new JTextField(student.getDepartment());
+    JComboBox<String> departmentCombo = new JComboBox<>(new String[]{
+        "Computer Science",
+        "Electronics & Communication",
+        "Mechanical Engineering"
+    });
+    departmentCombo.setSelectedItem(student.getDepartment());
         JSpinner semesterSpinner = new JSpinner(new SpinnerNumberModel(student.getSemester(), 1, 8, 1));
+        JComboBox<String> classCombo = new JComboBox<>(new String[]{"A", "B", "C"});
+        classCombo.setSelectedItem(student.getClassName());
 
         formPanel.add(new JLabel("Name:"));
         formPanel.add(nameField);
         formPanel.add(new JLabel("Roll No:"));
         formPanel.add(rollNoField);
-        formPanel.add(new JLabel("Department:"));
-        formPanel.add(departmentField);
+    formPanel.add(new JLabel("Department:"));
+    formPanel.add(departmentCombo);
         formPanel.add(new JLabel("Semester:"));
         formPanel.add(semesterSpinner);
+        formPanel.add(new JLabel("Class:"));
+        formPanel.add(classCombo);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveButton = new JButton("Save");
@@ -229,8 +334,9 @@ public class StudentPanel extends JPanel {
         saveButton.addActionListener(e -> {
             student.setName(nameField.getText().trim());
             student.setRollNo(rollNoField.getText().trim());
-            student.setDepartment(departmentField.getText().trim());
+            student.setDepartment((String) departmentCombo.getSelectedItem());
             student.setSemester((Integer) semesterSpinner.getValue());
+            student.setClassName((String) classCombo.getSelectedItem());
 
             String validationError = attendanceService.validateStudent(student, true);
             

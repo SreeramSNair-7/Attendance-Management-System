@@ -14,6 +14,7 @@ public class Student implements Serializable {
     private String rollNo;
     private String department;
     private int semester;
+    private String className;
     private LocalDateTime createdAt;
 
     // Default constructor
@@ -21,20 +22,22 @@ public class Student implements Serializable {
     }
 
     // Constructor without ID (for new students)
-    public Student(String name, String rollNo, String department, int semester) {
+    public Student(String name, String rollNo, String department, int semester, String className) {
         this.name = name;
         this.rollNo = rollNo;
         this.department = department;
         this.semester = semester;
+        this.className = className;
     }
 
     // Full constructor
-    public Student(int studentId, String name, String rollNo, String department, int semester, LocalDateTime createdAt) {
+    public Student(int studentId, String name, String rollNo, String department, int semester, String className, LocalDateTime createdAt) {
         this.studentId = studentId;
         this.name = name;
         this.rollNo = rollNo;
         this.department = department;
         this.semester = semester;
+        this.className = className;
         this.createdAt = createdAt;
     }
 
@@ -79,6 +82,14 @@ public class Student implements Serializable {
         this.semester = semester;
     }
 
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -95,6 +106,7 @@ public class Student implements Serializable {
                 ", rollNo='" + rollNo + '\'' +
                 ", department='" + department + '\'' +
                 ", semester=" + semester +
+                ", className='" + className + '\'' +
                 ", createdAt=" + createdAt +
                 '}';
     }

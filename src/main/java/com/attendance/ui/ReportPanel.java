@@ -1,19 +1,34 @@
 package com.attendance.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
+
 import com.attendance.dao.StudentDAO;
 import com.attendance.dao.SubjectDAO;
 import com.attendance.model.Student;
 import com.attendance.model.Subject;
 import com.attendance.service.AttendanceService;
 import com.attendance.util.CsvExporter;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.io.File;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Panel for viewing attendance reports and generating statistics
@@ -27,6 +42,7 @@ public class ReportPanel extends JPanel {
     private StudentDAO studentDAO;
     private SubjectDAO subjectDAO;
     private AttendanceService attendanceService;
+    private JLabel summaryLabel;
 
     public ReportPanel() {
         studentDAO = new StudentDAO();
@@ -38,21 +54,27 @@ public class ReportPanel extends JPanel {
     private void initializeComponents() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        Color darkBlue = new Color(13, 71, 161);
+        Color lightBlue = new Color(227, 242, 253);
+        setBackground(lightBlue);
 
         // Title panel
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        titlePanel.setBackground(darkBlue);
         JLabel titleLabel = new JLabel("Attendance Reports");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
-        add(titlePanel, BorderLayout.NORTH);
 
         // Top panel with filters
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setBorder(BorderFactory.createTitledBorder("Report Options"));
+        topPanel.setBackground(lightBlue);
 
         // Report type panel
         JPanel reportTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        reportTypePanel.setBackground(lightBlue);
         reportTypePanel.add(new JLabel("Report Type:"));
         reportTypeComboBox = new JComboBox<>(new String[]{
                 "Student Attendance Report",
@@ -64,6 +86,7 @@ public class ReportPanel extends JPanel {
 
         // Student selection panel
         JPanel studentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        studentPanel.setBackground(lightBlue);
         studentPanel.add(new JLabel("Select Student:"));
         studentComboBox = new JComboBox<>();
         studentComboBox.setPreferredSize(new Dimension(300, 25));
@@ -72,6 +95,7 @@ public class ReportPanel extends JPanel {
 
         // Subject selection panel
         JPanel subjectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        subjectPanel.setBackground(lightBlue);
         subjectPanel.add(new JLabel("Select Subject:"));
         subjectComboBox = new JComboBox<>();
         subjectComboBox.setPreferredSize(new Dimension(300, 25));
@@ -79,6 +103,7 @@ public class ReportPanel extends JPanel {
 
         // Buttons panel
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonsPanel.setBackground(lightBlue);
         JButton generateButton = new JButton("Generate Report");
         generateButton.addActionListener(e -> generateReport());
         buttonsPanel.add(generateButton);
@@ -89,7 +114,12 @@ public class ReportPanel extends JPanel {
         
         topPanel.add(buttonsPanel);
 
-        add(topPanel, BorderLayout.NORTH);
+        // Combine title + topPanel into one NORTH container
+        JPanel northContainer = new JPanel(new BorderLayout());
+        northContainer.setBackground(lightBlue);
+        northContainer.add(titlePanel, BorderLayout.NORTH);
+        northContainer.add(topPanel, BorderLayout.SOUTH);
+        add(northContainer, BorderLayout.NORTH);
 
         // Center panel with table
         String[] columnNames = {"Subject Code", "Subject Name", "Total", "Present", "Absent", "Percentage"};
@@ -105,11 +135,16 @@ public class ReportPanel extends JPanel {
         reportTable.getTableHeader().setReorderingAllowed(false);
         
         JScrollPane scrollPane = new JScrollPane(reportTable);
+        scrollPane.getViewport().setBackground(lightBlue);
         add(scrollPane, BorderLayout.CENTER);
 
         // Bottom panel with summary
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bottomPanel.setBackground(lightBlue);
         bottomPanel.setBorder(BorderFactory.createTitledBorder("Summary"));
+        summaryLabel = new JLabel("Select a student or subject and generate report to view summary");
+        summaryLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        bottomPanel.add(summaryLabel);
         add(bottomPanel, BorderLayout.SOUTH);
 
         // Load data
@@ -119,6 +154,8 @@ public class ReportPanel extends JPanel {
 
     public void refreshData() {
         loadStudents();
+            // Disabled auto-generation of default subjects
+            // subjectDAO.ensureDefaultSubjects();
         loadSubjects();
     }
 
@@ -168,6 +205,10 @@ public class ReportPanel extends JPanel {
 
         List<Map<String, Object>> reportData = attendanceService.getStudentAttendanceReport(selectedStudent.getStudentId());
         
+        int totalClasses = 0;
+        int totalPresent = 0;
+        int totalAbsent = 0;
+        
         for (Map<String, Object> row : reportData) {
             Object[] tableRow = {
                 row.get("subjectCode"),
@@ -178,6 +219,10 @@ public class ReportPanel extends JPanel {
                 String.format("%.2f%%", row.get("percentage"))
             };
             tableModel.addRow(tableRow);
+            
+            totalClasses += (Integer) row.get("total");
+            totalPresent += (Integer) row.get("present");
+            totalAbsent += (Integer) row.get("absent");
         }
 
         if (reportData.isEmpty()) {
@@ -185,6 +230,14 @@ public class ReportPanel extends JPanel {
                     "No attendance records found for this student.", 
                     "No Data", 
                     JOptionPane.INFORMATION_MESSAGE);
+            summaryLabel.setText("No attendance data available");
+        } else {
+            double overallPercentage = totalClasses > 0 ? (totalPresent * 100.0 / totalClasses) : 0;
+            summaryLabel.setText(String.format(
+                "Student: %s (%s) | Total Classes: %d | Present: %d | Absent: %d | Overall Attendance: %.2f%%",
+                selectedStudent.getName(), selectedStudent.getRollNo(), 
+                totalClasses, totalPresent, totalAbsent, overallPercentage
+            ));
         }
     }
 
@@ -202,6 +255,9 @@ public class ReportPanel extends JPanel {
 
         List<Map<String, Object>> reportData = attendanceService.getSubjectAttendanceReport(selectedSubject.getSubjectId());
         
+        int totalStudents = reportData.size();
+        int studentsAbove75 = 0;
+        
         for (Map<String, Object> row : reportData) {
             Object[] tableRow = {
                 row.get("rollNo"),
@@ -213,6 +269,11 @@ public class ReportPanel extends JPanel {
                 String.format("%.2f%%", row.get("percentage"))
             };
             tableModel.addRow(tableRow);
+            
+            double percentage = (Double) row.get("percentage");
+            if (percentage >= 75.0) {
+                studentsAbove75++;
+            }
         }
 
         if (reportData.isEmpty()) {
@@ -220,6 +281,13 @@ public class ReportPanel extends JPanel {
                     "No attendance records found for this subject.", 
                     "No Data", 
                     JOptionPane.INFORMATION_MESSAGE);
+            summaryLabel.setText("No attendance data available");
+        } else {
+            summaryLabel.setText(String.format(
+                "Subject: %s (%s) | Total Students: %d | Students with ≥75%% Attendance: %d",
+                selectedSubject.getSubjectName(), selectedSubject.getSubjectCode(),
+                totalStudents, studentsAbove75
+            ));
         }
     }
 

@@ -1,5 +1,32 @@
 package com.attendance.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
 import com.attendance.dao.AttendanceDAO;
 import com.attendance.dao.StudentDAO;
 import com.attendance.dao.SubjectDAO;
@@ -7,15 +34,6 @@ import com.attendance.model.Student;
 import com.attendance.model.Subject;
 import com.attendance.service.AttendanceService;
 import com.toedter.calendar.JDateChooser;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Panel for marking and managing attendance
@@ -42,17 +60,22 @@ public class AttendancePanel extends JPanel {
     private void initializeComponents() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        Color darkBlue = new Color(13, 71, 161);
+        Color lightBlue = new Color(227, 242, 253);
+        setBackground(lightBlue);
 
         // Title panel
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        titlePanel.setBackground(darkBlue);
         JLabel titleLabel = new JLabel("Mark Attendance");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
-        add(titlePanel, BorderLayout.NORTH);
 
         // Top panel with date and subject selection
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         topPanel.setBorder(BorderFactory.createTitledBorder("Select Date and Subject"));
+        topPanel.setBackground(lightBlue);
 
         topPanel.add(new JLabel("Date:"));
         dateChooser = new JDateChooser();
@@ -69,10 +92,16 @@ public class AttendancePanel extends JPanel {
         loadButton.addActionListener(e -> loadStudentsForAttendance());
         topPanel.add(loadButton);
 
-        add(topPanel, BorderLayout.NORTH);
+    // Combine title and top panel into a single NORTH container
+    JPanel northContainer = new JPanel(new BorderLayout());
+    northContainer.setBackground(lightBlue);
+    northContainer.add(titlePanel, BorderLayout.NORTH);
+    northContainer.add(topPanel, BorderLayout.SOUTH);
+    add(northContainer, BorderLayout.NORTH);
 
         // Center panel with table
-        JPanel centerPanel = new JPanel(new BorderLayout());
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.setBackground(lightBlue);
         
         String[] columnNames = {"Student ID", "Roll No", "Name", "Department", "Attendance"};
         tableModel = new DefaultTableModel(columnNames, 0) {
@@ -97,9 +126,30 @@ public class AttendancePanel extends JPanel {
         
         // Set up combo box for attendance column
         JComboBox<String> attendanceCombo = new JComboBox<>(new String[]{"Present", "Absent"});
+        // Color items in the dropdown as well
+        attendanceCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value != null) {
+                    String v = value.toString();
+                    if ("Present".equalsIgnoreCase(v)) {
+                        setForeground(new Color(0, 128, 0)); // green
+                    } else if ("Absent".equalsIgnoreCase(v)) {
+                        setForeground(Color.RED);
+                    } else {
+                        setForeground(list.getForeground());
+                    }
+                }
+                return c;
+            }
+        });
         attendanceTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(attendanceCombo));
+        // Color the Attendance column cells
+        attendanceTable.getColumnModel().getColumn(4).setCellRenderer(new AttendanceStatusRenderer());
         
-        JScrollPane scrollPane = new JScrollPane(attendanceTable);
+    JScrollPane scrollPane = new JScrollPane(attendanceTable);
+    scrollPane.getViewport().setBackground(lightBlue);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         
         // Status label
@@ -110,7 +160,8 @@ public class AttendancePanel extends JPanel {
         add(centerPanel, BorderLayout.CENTER);
 
         // Bottom panel with buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    bottomPanel.setBackground(lightBlue);
         
         JButton markAllPresentButton = new JButton("Mark All Present");
         markAllPresentButton.addActionListener(e -> markAllAttendance("Present"));
@@ -135,7 +186,37 @@ public class AttendancePanel extends JPanel {
         refreshData();
     }
 
+    /**
+     * Renderer to color attendance status cells: Present=Green, Absent=Red
+     */
+    private static class AttendanceStatusRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                      boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            // Reset to default first
+            if (!isSelected) {
+                c.setBackground(Color.WHITE);
+            }
+            if (value != null) {
+                String v = value.toString();
+                if ("Present".equalsIgnoreCase(v)) {
+                    c.setForeground(new Color(0, 128, 0)); // green
+                } else if ("Absent".equalsIgnoreCase(v)) {
+                    c.setForeground(Color.RED);
+                } else {
+                    c.setForeground(table.getForeground());
+                }
+            } else {
+                c.setForeground(table.getForeground());
+            }
+            return c;
+        }
+    }
+
     public void refreshData() {
+           // Disabled auto-generation of default subjects
+           // subjectDAO.ensureDefaultSubjects();
         loadSubjects();
     }
 

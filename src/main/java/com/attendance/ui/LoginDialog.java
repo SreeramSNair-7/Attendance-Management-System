@@ -1,9 +1,24 @@
 package com.attendance.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 /**
  * Simple login dialog for the application
@@ -20,7 +35,7 @@ public class LoginDialog extends JDialog {
 
     private void initializeComponents() {
         setLayout(new BorderLayout(10, 10));
-        setSize(400, 250);
+        setSize(450, 280);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
@@ -38,12 +53,16 @@ public class LoginDialog extends JDialog {
         formPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 20, 30));
 
         JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Arial", Font.BOLD, 16));
         usernameField = new JTextField();
-        usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
+        usernameField.setFont(new Font("Arial", Font.PLAIN, 16));
+        usernameField.setPreferredSize(new Dimension(250, 35));
 
         JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Arial", Font.BOLD, 16));
         passwordField = new JPasswordField();
-        passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 16));
+        passwordField.setPreferredSize(new Dimension(250, 35));
 
         formPanel.add(usernameLabel);
         formPanel.add(usernameField);
