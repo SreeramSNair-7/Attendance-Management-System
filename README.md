@@ -2,20 +2,6 @@
 
 A comprehensive desktop application for managing student attendance records using Java Swing for the GUI and MySQL for the backend database.
 
-## 📋 Table of Contents
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [System Requirements](#system-requirements)
-- [Installation & Setup](#installation--setup)
-- [Database Setup](#database-setup)
-- [Building the Project](#building-the-project)
-- [Running the Application](#running-the-application)
-- [Usage Guide](#usage-guide)
-- [Project Structure](#project-structure)
-- [Default Login Credentials](#default-login-credentials)
-- [Screenshots](#screenshots)
-- [License](#license)
-
 ## ✨ Features
 
 ### Student Management
