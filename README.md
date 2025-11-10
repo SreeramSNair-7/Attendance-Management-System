@@ -281,8 +281,6 @@ The application comes with three pre-configured users:
 
 ## 📸 Screenshots
 
-*Screenshots will be added here*
-
 ### Dashboard
 ![Dashboard](screenshots/dashboard.png)
 
@@ -322,13 +320,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Sreeram S Nair**
-
-## 🙏 Acknowledgments
-
-- Java Swing documentation
-- MySQL documentation
-- Maven documentation
-- JCalendar library by Kai Toedter
 
 ---
 
