@@ -1,9 +1,27 @@
 package com.attendance.ui;
 
-import com.attendance.db.DatabaseConnection;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
+import com.attendance.db.DatabaseConnection;
 
 /**
  * Main application frame with menu bar and panel switching
@@ -38,9 +56,9 @@ public class MainFrame extends JFrame {
             e.printStackTrace();
         }
         
-        // Initialize card layout and main panel
+        // Initialize card layout and main panel with custom background
         cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
+        mainPanel = new CustomBackgroundPanel(cardLayout);
         
         // Initialize panels
         studentPanel = new StudentPanel();
@@ -120,15 +138,18 @@ public class MainFrame extends JFrame {
 
     private JPanel createDashboardPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false); // Transparent to show background
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Title
         JLabel titleLabel = new JLabel("Attendance Management System", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        titleLabel.setForeground(Color.WHITE); // White text on gradient
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         
         // Center panel with buttons
         JPanel centerPanel = new JPanel(new GridLayout(2, 2, 20, 20));
+        centerPanel.setOpaque(false); // Transparent to show background
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 100, 20, 100));
         
         // Create dashboard buttons
@@ -144,8 +165,10 @@ public class MainFrame extends JFrame {
         
         // Info panel
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        infoPanel.setOpaque(false); // Transparent to show background
         JLabel infoLabel = new JLabel("Welcome to the Attendance Management System");
         infoLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        infoLabel.setForeground(Color.WHITE); // White text on gradient
         infoPanel.add(infoLabel);
         
         panel.add(titleLabel, BorderLayout.NORTH);
