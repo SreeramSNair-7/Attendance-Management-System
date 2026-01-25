@@ -48,25 +48,51 @@ public class SubjectPanel extends JPanel {
     }
 
     private void initializeComponents() {
-    setLayout(new BorderLayout(10, 10));
-    setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    Color darkBlue = new Color(13, 71, 161);
-    Color lightBlue = new Color(227, 242, 253);
-    setBackground(lightBlue);
+        // Create custom background with animated gradient
+        CustomBackgroundPanel bgPanel = new CustomBackgroundPanel(new BorderLayout(10, 10));
+        bgPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create semi-transparent content card
+        JPanel contentCard = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(255, 255, 255, 220));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2d.dispose();
+            }
+        };
+        contentCard.setOpaque(false);
+        contentCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        Color darkBlue = new Color(13, 71, 161);
 
-        // Title panel
-    JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    titlePanel.setBackground(darkBlue);
+        // Title panel with gradient
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT)) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+                java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                    0, 0, darkBlue,
+                    getWidth(), 0, new Color(25, 103, 210)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.dispose();
+            }
+        };
+        titlePanel.setOpaque(false);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         JLabel titleLabel = new JLabel("Manage Subjects");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-    titleLabel.setForeground(Color.WHITE);
+        titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
-        add(titlePanel, BorderLayout.NORTH);
+        contentCard.add(titlePanel, BorderLayout.NORTH);
 
         // Create table
-        String[] columnNames = {"ID", "Subject Code", "Subject Name", "Semester"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
+    scrollPane.getViewport().setBackground(Color.WHITE);
+    contentCard.add(scrollPane, BorderLayout.CENTER);            @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -77,18 +103,16 @@ public class SubjectPanel extends JPanel {
         subjectTable.getTableHeader().setReorderingAllowed(false);
         
     JScrollPane scrollPane = new JScrollPane(subjectTable);
-    scrollPane.getViewport().setBackground(lightBlue);
-        add(scrollPane, BorderLayout.CENTER);
+    scrollPane.getViewport().setBackground(Color.WHITE);
+    contentCard.add(scrollPane, BorderLayout.CENTER);
 
         // Bottom panel with search and buttons
     JPanel bottomPanel = new JPanel(new BorderLayout(10, 10));
-    bottomPanel.setBackground(lightBlue);
+    bottomPanel.setOpaque(false);
         
         // Search panel
-    JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    searchPanel.setBackground(lightBlue);
-        
-        // Semester filter
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setOpaque(false);
         searchPanel.add(new JLabel("Semester:"));
         semesterFilterCombo = new JComboBox<>(new String[]{"All", "1", "2", "3", "4", "5", "6", "7", "8"});
         semesterFilterCombo.addActionListener(e -> applyFilters());
@@ -113,7 +137,7 @@ public class SubjectPanel extends JPanel {
     buttonPanel.setBackground(lightBlue);
         JButton addButton = new JButton("Add Subject");
         addButton.addActionListener(e -> showAddDialog());
-        JButton editButton = new JButton("Edit Subject");
+        buttonPanel.setOpaque(false);"Edit Subject");
         editButton.addActionListener(e -> showEditDialog());
         JButton deleteButton = new JButton("Delete Subject");
         deleteButton.addActionListener(e -> deleteSubject());

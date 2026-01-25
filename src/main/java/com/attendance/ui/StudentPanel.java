@@ -56,24 +56,51 @@ public class StudentPanel extends JPanel {
     }
 
     private void initializeComponents() {
-    setLayout(new BorderLayout(10, 10));
-    setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    Color primaryBlue = new Color(51, 122, 183);
-    Color lightBlue = new Color(230, 242, 255);
-    setBackground(lightBlue);
+        // Create custom background with animated gradient
+        CustomBackgroundPanel bgPanel = new CustomBackgroundPanel(new BorderLayout(10, 10));
+        bgPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create semi-transparent content card
+        JPanel contentCard = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(255, 255, 255, 220));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2d.dispose();
+            }
+        };
+        contentCard.setOpaque(false);
+        contentCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        Color primaryBlue = new Color(51, 122, 183);
 
-        // Title panel
-    JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    titlePanel.setBackground(primaryBlue);
+        // Title panel with gradient
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT)) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+                java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                    0, 0, primaryBlue,
+                    getWidth(), 0, new Color(41, 128, 185)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.dispose();
+            }
+        };
+        titlePanel.setOpaque(false);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         JLabel titleLabel = new JLabel("Manage Students");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-    titleLabel.setForeground(Color.WHITE);
+        titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
-        add(titlePanel, BorderLayout.NORTH);
+        contentCard.add(titlePanel, BorderLayout.NORTH);
 
         // Create table
-        String[] columnNames = {"ID", "Name", "Roll No", "Department", "Semester", "Class"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
+        String[] columnNames = {"ID", "Name", "Color.WHITE);
+        contentCard.tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -90,11 +117,11 @@ public class StudentPanel extends JPanel {
 
         // Bottom panel with search and buttons
         JPanel bottomPanel = new JPanel(new BorderLayout(10, 10));
-        bottomPanel.setBackground(lightBlue);
+        bottomPanel.setOpaque(false);
         
         // Search panel
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.setBackground(lightBlue);
+        searchPanel.setOpaque(false);
         
         // Class filter
         searchPanel.add(new JLabel("Class:"));
@@ -126,7 +153,7 @@ public class StudentPanel extends JPanel {
         
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(lightBlue);
+        buttonPanel.setOpaque(false);
         JButton addButton = new JButton("Add Student");
         addButton.addActionListener(e -> showAddDialog());
         JButton editButton = new JButton("Edit Student");
@@ -144,7 +171,13 @@ public class StudentPanel extends JPanel {
         bottomPanel.add(searchPanel, BorderLayout.WEST);
         bottomPanel.add(buttonPanel, BorderLayout.EAST);
         
-        add(bottomPanel, BorderLayout.SOUTH);
+        contentCard.add(bottomPanel, BorderLayout.SOUTH);
+        
+        // Add content card to background panel
+        bgPanel.add(contentCard, BorderLayout.CENTER);
+        this.setLayout(new BorderLayout());
+        this.add(bgPanel, BorderLayout.CENTER);
+        this.setOpaque(false);
 
         // Load initial data
         refreshData();

@@ -6,7 +6,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -68,46 +71,63 @@ public class MainFrame extends JFrame {
     }
 
     private void setupUI() {
-        // Create menu bar
-        JMenuBar menuBar = new JMenuBar();
+        // Create styled menu bar with gradient
+        JMenuBar menuBar = new JMenuBar() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                Color color1 = new Color(52, 152, 219);
+                Color color2 = new Color(155, 89, 182);
+                java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                    0, 0, color1, getWidth(), 0, color2
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        menuBar.setBorderPainted(false);
+        
+        Font menuFont = new Font("Arial", Font.BOLD, 14);
         
         // Home menu
-        JMenu homeMenu = new JMenu("Home");
+        JMenu homeMenu = createStyledMenu("Home", menuFont);
         JMenuItem dashboardItem = new JMenuItem("Dashboard");
         dashboardItem.addActionListener(e -> showDashboard());
         homeMenu.add(dashboardItem);
         menuBar.add(homeMenu);
         
         // Students menu
-        JMenu studentsMenu = new JMenu("Students");
+        JMenu studentsMenu = createStyledMenu("Students", menuFont);
         JMenuItem manageStudentsItem = new JMenuItem("Manage Students");
         manageStudentsItem.addActionListener(e -> showPanel("students"));
         studentsMenu.add(manageStudentsItem);
         menuBar.add(studentsMenu);
         
         // Subjects menu
-        JMenu subjectsMenu = new JMenu("Subjects");
+        JMenu subjectsMenu = createStyledMenu("Subjects", menuFont);
         JMenuItem manageSubjectsItem = new JMenuItem("Manage Subjects");
         manageSubjectsItem.addActionListener(e -> showPanel("subjects"));
         subjectsMenu.add(manageSubjectsItem);
         menuBar.add(subjectsMenu);
         
         // Attendance menu
-        JMenu attendanceMenu = new JMenu("Attendance");
+        JMenu attendanceMenu = createStyledMenu("Attendance", menuFont);
         JMenuItem markAttendanceItem = new JMenuItem("Mark Attendance");
         markAttendanceItem.addActionListener(e -> showPanel("attendance"));
         attendanceMenu.add(markAttendanceItem);
         menuBar.add(attendanceMenu);
         
         // Reports menu
-        JMenu reportsMenu = new JMenu("Reports");
+        JMenu reportsMenu = createStyledMenu("Reports", menuFont);
         JMenuItem viewReportsItem = new JMenuItem("View Reports");
         viewReportsItem.addActionListener(e -> showPanel("reports"));
         reportsMenu.add(viewReportsItem);
         menuBar.add(reportsMenu);
         
         // Help menu
-        JMenu helpMenu = new JMenu("Help");
+        JMenu helpMenu = createStyledMenu("Help", menuFont);
         JMenuItem aboutItem = new JMenuItem("About");
         aboutItem.addActionListener(e -> showAboutDialog());
         helpMenu.add(aboutItem);
@@ -152,11 +172,11 @@ public class MainFrame extends JFrame {
         centerPanel.setOpaque(false); // Transparent to show background
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 100, 20, 100));
         
-        // Create dashboard buttons
-        JButton studentsBtn = createDashboardButton("Manage Students", "students");
-        JButton subjectsBtn = createDashboardButton("Manage Subjects", "subjects");
-        JButton attendanceBtn = createDashboardButton("Mark Attendance", "attendance");
-        JButton reportsBtn = createDashboardButton("View Reports", "reports");
+        // Create dashboard buttons with gradient cards
+        JButton studentsBtn = createDashboardButton("Manage Students", "students", new Color(52, 152, 219), new Color(41, 128, 185));
+        JButton subjectsBtn = createDashboardButton("Manage Subjects", "subjects", new Color(155, 89, 182), new Color(142, 68, 173));
+        JButton attendanceBtn = createDashboardButton("Mark Attendance", "attendance", new Color(46, 204, 113), new Color(39, 174, 96));
+        JButton reportsBtn = createDashboardButton("View Reports", "reports", new Color(231, 76, 60), new Color(192, 57, 43));
         
         centerPanel.add(studentsBtn);
         centerPanel.add(subjectsBtn);
@@ -178,13 +198,56 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    private JButton createDashboardButton(String text, String panelName) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 18));
-        button.setPreferredSize(new Dimension(200, 100));
+    private JButton createDashboardButton(String text, String panelName, Color color1, Color color2) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                Color topColor = color1;
+                Color bottomColor = color2;
+                
+                if (getModel().isPressed()) {
+                    topColor = color2.darker();
+                    bottomColor = color1.darker();
+                } else if (getModel().isRollover()) {
+                    topColor = color1.brighter();
+                    bottomColor = color2.brighter();
+                }
+                
+                java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                    0, 0, topColor,
+                    0, getHeight(), bottomColor
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
+                
+                // Add shadow effect
+                g2d.setColor(new Color(0, 0, 0, 30));
+                g2d.fillRoundRect(5, 5, getWidth() - 5, getHeight() - 5, 25, 25);
+                
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+        button.setFont(new Font("Arial", Font.BOLD, 20));
+        button.setForeground(Color.WHITE);
+        button.setPreferredSize(new Dimension(200, 120));
         button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
         button.addActionListener(e -> showPanel(panelName));
         return button;
+    }
+    
+    private JMenu createStyledMenu(String text, Font font) {
+        JMenu menu = new JMenu(text);
+        menu.setFont(font);
+        menu.setForeground(Color.WHITE);
+        menu.setOpaque(false);
+        return menu;
     }
 
     private void showPanel(String panelName) {
